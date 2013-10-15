@@ -93,6 +93,23 @@ func TestScheduleOffset(t *testing.T) {
 	}
 }
 
+func TestSchedulePast(t *testing.T) {
+	t1 := time.Now()
+	t2 := time.Now()
+	eh := MakeEventHeapTime(t2)
+
+	err := eh.Schedule(nil, t1)
+	if err != ErrPast {
+		t.Errorf("Expected error %v; got %v", ErrPast, err)
+	}
+
+	offset := t1.Sub(t2)
+	err = eh.ScheduleOffset(nil, offset)
+	if err != ErrPast {
+		t.Errorf("Expected error %v; got %v", ErrPast, err)
+	}
+}
+
 func TestPeekNext(t *testing.T) {
 	i := 0
 	f := func(j int) func(tm time.Time) interface{} {
