@@ -1,4 +1,4 @@
-package eventheap
+package fsched
 
 import (
 	"math/rand"
@@ -9,28 +9,28 @@ import (
 func TestNow(t *testing.T) {
 	// Zero value
 	var tm time.Time
-	eh := MakeEventHeap()
-	tmprime := eh.Now()
+	s := MakeScheduler()
+	tmprime := s.Now()
 	if tmprime != tm {
 		t.Errorf("Expected time %v; got %v", tm, tmprime)
 	}
 
 	tm = time.Now()
-	eh = MakeEventHeapTime(tm)
-	tmprime = eh.Now()
+	s = MakeSchedulerTime(tm)
+	tmprime = s.Now()
 	if tmprime != tm {
 		t.Errorf("Expected time %v; got %v", tm, tmprime)
 	}
 }
 
 func TestEmpty(t *testing.T) {
-	eh := MakeEventHeap()
-	if !eh.Empty() {
-		t.Error("EventHeap.Empty() returned false on empty event heap")
+	s := MakeScheduler()
+	if !s.Empty() {
+		t.Error("Scheduler.Empty() returned false on empty scheduler")
 	}
-	eh.Schedule(nil, time.Now())
-	if eh.Empty() {
-		t.Error("EventHeap.Empty() returned true on non-empty event heap")
+	s.Schedule(nil, time.Now())
+	if s.Empty() {
+		t.Error("Scheduler.Empty() returned true on non-empty scheduler")
 	}
 }
 
@@ -48,16 +48,16 @@ func TestSchedule(t *testing.T) {
 		}
 	}
 	times := rand.Perm(100)
-	eh := MakeEventHeap()
+	s := MakeScheduler()
 	var tm time.Time
 	for _, v := range times {
-		eh.Schedule(f(v), tm.Add(time.Duration(v)))
+		s.Schedule(f(v), tm.Add(time.Duration(v)))
 	}
 	for ind := 0; ind < len(times); ind++ {
-		eh.CallNext()
+		s.CallNext()
 	}
-	if !eh.Empty() {
-		t.Error("Event heap should be empty")
+	if !s.Empty() {
+		t.Error("Scheduler should be empty")
 	}
 }
 
@@ -75,36 +75,36 @@ func TestScheduleOffset(t *testing.T) {
 		}
 	}
 	times := rand.Perm(100)
-	eh := MakeEventHeap()
+	s := MakeScheduler()
 	for _, v := range times {
-		eh.ScheduleOffset(f(v), time.Duration(v))
+		s.ScheduleOffset(f(v), time.Duration(v))
 	}
 	for ind := 0; ind < len(times); ind++ {
-		p, _ := eh.PeekNext()
+		p, _ := s.PeekNext()
 		var tm time.Time
 
 		if p != tm.Add(time.Duration(ind)) {
 			t.Errorf("Expected PeekNext() to return %v; returned %v", tm.Add(time.Duration(ind)), p)
 		}
-		eh.CallNext()
+		s.CallNext()
 	}
-	if !eh.Empty() {
-		t.Error("Event heap should be empty")
+	if !s.Empty() {
+		t.Error("Scheduler should be empty")
 	}
 }
 
 func TestSchedulePast(t *testing.T) {
 	t1 := time.Now()
 	t2 := time.Now()
-	eh := MakeEventHeapTime(t2)
+	s := MakeSchedulerTime(t2)
 
-	err := eh.Schedule(nil, t1)
+	err := s.Schedule(nil, t1)
 	if err != ErrPast {
 		t.Errorf("Expected error %v; got %v", ErrPast, err)
 	}
 
 	offset := t1.Sub(t2)
-	err = eh.ScheduleOffset(nil, offset)
+	err = s.ScheduleOffset(nil, offset)
 	if err != ErrPast {
 		t.Errorf("Expected error %v; got %v", ErrPast, err)
 	}
@@ -124,27 +124,27 @@ func TestPeekNext(t *testing.T) {
 		}
 	}
 	times := rand.Perm(100)
-	eh := MakeEventHeap()
+	s := MakeScheduler()
 	for _, v := range times {
-		eh.ScheduleOffset(f(v), time.Duration(v))
+		s.ScheduleOffset(f(v), time.Duration(v))
 	}
 	for ind := 0; ind < len(times); ind++ {
-		p, _ := eh.PeekNext()
+		p, _ := s.PeekNext()
 		var tm time.Time
 
 		if p != tm.Add(time.Duration(ind)) {
 			t.Errorf("Expected PeekNext() to return %v; returned %v", tm.Add(time.Duration(ind)), p)
 		}
-		eh.CallNext()
+		s.CallNext()
 	}
-	if !eh.Empty() {
-		t.Error("Event heap should be empty")
+	if !s.Empty() {
+		t.Error("Scheduler should be empty")
 	}
 }
 
 func TestPeekNextError(t *testing.T) {
-	eh := MakeEventHeap()
-	_, err := eh.PeekNext()
+	s := MakeScheduler()
+	_, err := s.PeekNext()
 	if err != ErrEmpty {
 		t.Errorf("Expected error %v; got %v", ErrEmpty, err)
 	}

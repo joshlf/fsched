@@ -1,4 +1,4 @@
-package eventheap
+package fsched
 
 import (
 	"container/heap"
@@ -30,55 +30,55 @@ var (
 	ErrEmpty = errors.New("Empty")
 )
 
-type EventHeap struct {
+type Scheduler struct {
 	heap *eventHeap
 	now  time.Time
 }
 
-func MakeEventHeap() EventHeap {
-	eh := EventHeap{heap: new(eventHeap)}
-	*eh.heap = make([]event, 0)
-	return eh
+func MakeScheduler() Scheduler {
+	s := Scheduler{heap: new(eventHeap)}
+	*s.heap = make([]event, 0)
+	return s
 }
 
-func MakeEventHeapTime(t time.Time) EventHeap {
-	eh := EventHeap{new(eventHeap), t}
-	*eh.heap = make([]event, 0)
-	return eh
+func MakeSchedulerTime(t time.Time) Scheduler {
+	s := Scheduler{new(eventHeap), t}
+	*s.heap = make([]event, 0)
+	return s
 }
 
-func (e EventHeap) Now() time.Time {
-	return e.now
+func (s Scheduler) Now() time.Time {
+	return s.now
 }
 
-func (e EventHeap) Empty() bool {
-	return e.heap.Len() < 1
+func (s Scheduler) Empty() bool {
+	return s.heap.Len() < 1
 }
 
 // Returns error if t < e.Now()
-func (e EventHeap) Schedule(f func(time.Time) interface{}, time time.Time) error {
-	if time.Before(e.now) {
+func (s Scheduler) Schedule(f func(time.Time) interface{}, time time.Time) error {
+	if time.Before(s.now) {
 		return ErrPast
 	}
-	heap.Push(e.heap, event{f, time})
+	heap.Push(s.heap, event{f, time})
 	return nil
 }
 
 // Returns an error if offset < 0
-func (e EventHeap) ScheduleOffset(f func(time.Time) interface{}, offset time.Duration) error {
-	return e.Schedule(f, e.now.Add(offset))
+func (s Scheduler) ScheduleOffset(f func(time.Time) interface{}, offset time.Duration) error {
+	return s.Schedule(f, s.now.Add(offset))
 }
 
 // Returns the timestamp on the next scheduled event
-func (e EventHeap) PeekNext() (time.Time, error) {
+func (s Scheduler) PeekNext() (time.Time, error) {
 	var t time.Time
-	if e.Empty() {
+	if s.Empty() {
 		return t, ErrEmpty
 	}
-	return (*e.heap)[0].time, nil
+	return (*s.heap)[0].time, nil
 }
 
-func (e EventHeap) CallNext() interface{} {
-	evt := heap.Pop(e.heap).(event)
+func (s Scheduler) CallNext() interface{} {
+	evt := heap.Pop(s.heap).(event)
 	return evt.f(evt.time)
 }
