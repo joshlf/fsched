@@ -9,14 +9,14 @@ import (
 func TestNow(t *testing.T) {
 	// Zero value
 	var tm time.Time
-	s := MakeScheduler()
+	s := NewScheduler()
 	tmprime := s.Now()
 	if tmprime != tm {
 		t.Errorf("Expected time %v; got %v", tm, tmprime)
 	}
 
 	tm = time.Now()
-	s = MakeSchedulerTime(tm)
+	s = NewSchedulerTime(tm)
 	tmprime = s.Now()
 	if tmprime != tm {
 		t.Errorf("Expected time %v; got %v", tm, tmprime)
@@ -24,7 +24,7 @@ func TestNow(t *testing.T) {
 }
 
 func TestEmpty(t *testing.T) {
-	s := MakeScheduler()
+	s := NewScheduler()
 	if !s.Empty() {
 		t.Error("Scheduler.Empty() returned false on empty scheduler")
 	}
@@ -48,7 +48,7 @@ func TestSchedule(t *testing.T) {
 		}
 	}
 	times := rand.Perm(100)
-	s := MakeScheduler()
+	s := NewScheduler()
 	var tm time.Time
 	for _, v := range times {
 		s.Schedule(f(v), tm.Add(time.Duration(v)))
@@ -75,7 +75,7 @@ func TestScheduleOffset(t *testing.T) {
 		}
 	}
 	times := rand.Perm(100)
-	s := MakeScheduler()
+	s := NewScheduler()
 	for _, v := range times {
 		s.ScheduleOffset(f(v), time.Duration(v))
 	}
@@ -96,7 +96,7 @@ func TestScheduleOffset(t *testing.T) {
 func TestSchedulePast(t *testing.T) {
 	t1 := time.Now()
 	t2 := time.Now()
-	s := MakeSchedulerTime(t2)
+	s := NewSchedulerTime(t2)
 
 	err := s.Schedule(nil, t1)
 	if err != ErrPast {
@@ -124,7 +124,7 @@ func TestPeekNext(t *testing.T) {
 		}
 	}
 	times := rand.Perm(100)
-	s := MakeScheduler()
+	s := NewScheduler()
 	for _, v := range times {
 		s.ScheduleOffset(f(v), time.Duration(v))
 	}
@@ -143,7 +143,7 @@ func TestPeekNext(t *testing.T) {
 }
 
 func TestPeekNextError(t *testing.T) {
-	s := MakeScheduler()
+	s := NewScheduler()
 	_, err := s.PeekNext()
 	if err != ErrEmpty {
 		t.Errorf("Expected error %v; got %v", ErrEmpty, err)
