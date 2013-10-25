@@ -153,3 +153,11 @@ func TestPeekNextError(t *testing.T) {
 		t.Errorf("Expected error %v; got %v", ErrEmpty, err)
 	}
 }
+
+func TestCallNextError(t *testing.T) {
+	s := NewScheduler()
+	_, err := s.CallNext()
+	if err != ErrEmpty {
+		t.Errorf("Expected error %v; got %v", ErrEmpty, err)
+	}
+}
