@@ -71,29 +71,29 @@ type Scheduler struct {
 // Returns a new Scheduler whose
 // internal clock is set to the
 // zero value of time.Time.
-func NewScheduler() Scheduler {
+func NewScheduler() *Scheduler {
 	s := Scheduler{heap: new(eventHeap)}
 	*s.heap = make([]event, 0)
-	return s
+	return &s
 }
 
 // Returns a new Scheduler whose
 // internal clock is set to t.
-func NewSchedulerTime(t time.Time) Scheduler {
+func NewSchedulerTime(t time.Time) *Scheduler {
 	s := Scheduler{new(eventHeap), t}
 	*s.heap = make([]event, 0)
-	return s
+	return &s
 }
 
 // Returns the current value
 // of the internal clock.
-func (s Scheduler) Now() time.Time {
+func (s *Scheduler) Now() time.Time {
 	return s.now
 }
 
 // Returns whether there are
 // 0 events scheduled.
-func (s Scheduler) Empty() bool {
+func (s *Scheduler) Empty() bool {
 	return s.heap.Len() < 1
 }
 
@@ -102,7 +102,7 @@ func (s Scheduler) Empty() bool {
 //
 // Returns ErrPast if t is before
 // s.Now().
-func (s Scheduler) Schedule(f func(time.Time) interface{}, t time.Time) error {
+func (s *Scheduler) Schedule(f func(time.Time) interface{}, t time.Time) error {
 	if t.Before(s.now) {
 		return ErrPast
 	}
@@ -115,14 +115,14 @@ func (s Scheduler) Schedule(f func(time.Time) interface{}, t time.Time) error {
 //
 // Returns ErrPast if offset is
 // negative.
-func (s Scheduler) ScheduleOffset(f func(time.Time) interface{}, offset time.Duration) error {
+func (s *Scheduler) ScheduleOffset(f func(time.Time) interface{}, offset time.Duration) error {
 	return s.Schedule(f, s.now.Add(offset))
 }
 
 // Returns the timestamp on the next
 // scheduled event, or the zero value
 // and ErrEmpty if no events are
-// schedule.
+// scheduled.
 func (s Scheduler) PeekNext() (time.Time, error) {
 	var t time.Time
 	if s.Empty() {
@@ -141,7 +141,12 @@ func (s Scheduler) PeekNext() (time.Time, error) {
 // If there are no events scheduled,
 // return a nil interface value and
 // ErrEmpty.
-func (s Scheduler) CallNext() (interface{}, error) {
+//
+// Note that CallNext does not modify
+// s after calling the callback. Thus,
+// it is safe to call methods on s
+// from within the callback.
+func (s *Scheduler) CallNext() (interface{}, error) {
 	if s.Empty() {
 		return nil, ErrEmpty
 	}
