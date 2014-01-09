@@ -154,3 +154,50 @@ func (s *Scheduler) CallNext() (interface{}, error) {
 	s.now = evt.time
 	return evt.f(evt.time), nil
 }
+
+// Remove the next scheduled event
+// from the Scheduler, but do not
+// alter the internal clock.
+func (s *Scheduler) RemoveNext() {
+	if !s.Empty() {
+		heap.Pop(s.heap)
+	}
+}
+
+// Fast-forward the internal clock
+// to match the next scheduled event,
+// and remove the event from the
+// Scheduler. If there are no events
+// scheduled, do not alter the clock.
+func (s *Scheduler) RemoveNextUpdate() {
+	if !s.Empty() {
+		evt := heap.Pop(s.heap).(event)
+		s.now = evt.time
+	}
+}
+
+// Remove all scheduled events from
+// the Scheduler, but do not alter
+// the internal clock.
+func (s *Scheduler) RemoveAll() {
+	*s.heap = make([]event, 0)
+}
+
+// Remove all scheduled events from
+// the Scheduler, fast-forwarding
+// the internal clock to match the
+// latest scheduled event. If there
+// are no events scheduled, do not
+// alter the clock.
+func (s *Scheduler) RemoveAllUpdate() {
+	if !s.Empty() {
+		latest := (*s.heap)[0].time
+		for _, evt := range (*s.heap)[1:] {
+			if evt.time.After(latest) {
+				latest = evt.time
+			}
+		}
+		s.now = latest
+	}
+	*s.heap = make([]event, 0)
+}

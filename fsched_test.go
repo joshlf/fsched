@@ -10,16 +10,23 @@ import (
 	"time"
 )
 
+var (
+	// Use these fixed values instead of time.Now()
+	// since some machines fix the return value of
+	// time.Now(), which can cause unexpected behavior.
+	Zero          = time.Time{}
+	NanoAfterZero = Zero.Add(time.Nanosecond)
+)
+
 func TestNow(t *testing.T) {
-	// Zero value
-	var tm time.Time
+	tm := Zero
 	s := NewScheduler()
 	tmprime := s.Now()
 	if tmprime != tm {
 		t.Errorf("Expected time %v; got %v", tm, tmprime)
 	}
 
-	tm = time.Now()
+	tm = NanoAfterZero
 	s = NewSchedulerTime(tm)
 	tmprime = s.Now()
 	if tmprime != tm {
@@ -32,13 +39,24 @@ func TestEmpty(t *testing.T) {
 	if !s.Empty() {
 		t.Error("Scheduler.Empty() returned false on empty scheduler")
 	}
-	s.Schedule(nil, time.Now())
+
+	s.Schedule(nil, NanoAfterZero)
 	if s.Empty() {
 		t.Error("Scheduler.Empty() returned true on non-empty scheduler")
 	}
 }
 
 func TestSchedule(t *testing.T) {
+	// This test verifies that the scheduler
+	// is ordering things properly by scheduling
+	// f(j) at offset j. Since all j in the
+	// range are used, f(j) should be the jth
+	// function to be called. Calling f(j)
+	// increments a global counter, and compares
+	// it to j. Thus, after j calls to f, the
+	// global counter should have been
+	// incremented j times.
+
 	i := 0
 	f := func(j int) func(tm time.Time) interface{} {
 		return func(tm time.Time) interface{} {
@@ -66,6 +84,16 @@ func TestSchedule(t *testing.T) {
 }
 
 func TestScheduleOffset(t *testing.T) {
+	// This test verifies that the scheduler
+	// is ordering things properly by scheduling
+	// f(j) at offset j. Since all j in the
+	// range are used, f(j) should be the jth
+	// function to be called. Calling f(j)
+	// increments a global counter, and compares
+	// it to j. Thus, after j calls to f, the
+	// global counter should have been
+	// incremented j times.
+
 	i := 0
 	f := func(j int) func(tm time.Time) interface{} {
 		return func(tm time.Time) interface{} {
@@ -85,7 +113,7 @@ func TestScheduleOffset(t *testing.T) {
 	}
 	for ind := 0; ind < len(times); ind++ {
 		p, _ := s.PeekNext()
-		var tm time.Time
+		tm := Zero
 
 		if p != tm.Add(time.Duration(ind)) {
 			t.Errorf("Expected PeekNext() to return %v; returned %v", tm.Add(time.Duration(ind)), p)
@@ -98,8 +126,8 @@ func TestScheduleOffset(t *testing.T) {
 }
 
 func TestSchedulePast(t *testing.T) {
-	t1 := time.Now()
-	t2 := time.Now()
+	t1 := Zero
+	t2 := NanoAfterZero
 	s := NewSchedulerTime(t2)
 
 	err := s.Schedule(nil, t1)
@@ -115,6 +143,16 @@ func TestSchedulePast(t *testing.T) {
 }
 
 func TestPeekNext(t *testing.T) {
+	// This test verifies that the scheduler
+	// is ordering things properly by scheduling
+	// f(j) at offset j. Since all j in the
+	// range are used, f(j) should be the jth
+	// function to be called. Calling f(j)
+	// increments a global counter, and compares
+	// it to j. Thus, after j calls to f, the
+	// global counter should have been
+	// incremented j times.
+
 	i := 0
 	f := func(j int) func(tm time.Time) interface{} {
 		return func(tm time.Time) interface{} {
@@ -134,7 +172,7 @@ func TestPeekNext(t *testing.T) {
 	}
 	for ind := 0; ind < len(times); ind++ {
 		p, _ := s.PeekNext()
-		var tm time.Time
+		tm := Zero
 
 		if p != tm.Add(time.Duration(ind)) {
 			t.Errorf("Expected PeekNext() to return %v; returned %v", tm.Add(time.Duration(ind)), p)
@@ -159,5 +197,70 @@ func TestCallNextError(t *testing.T) {
 	_, err := s.CallNext()
 	if err != ErrEmpty {
 		t.Errorf("Expected error %v; got %v", ErrEmpty, err)
+	}
+}
+
+func TestRemoveNext(t *testing.T) {
+	s := NewScheduler()
+	s.Schedule(nil, Zero)
+	s.RemoveNext()
+	if !s.Empty() {
+		t.Errorf("Scheduler should be empty")
+	}
+}
+
+func TestRemoveNextUpdate(t *testing.T) {
+	s := NewScheduler()
+	s.Schedule(nil, Zero)
+	s.RemoveNextUpdate()
+	if !s.Empty() {
+		t.Errorf("Scheduler should be empty")
+	}
+
+	s = NewScheduler()
+	tm := NanoAfterZero
+	s.Schedule(nil, tm)
+	s.RemoveNextUpdate()
+	if tmprime := s.Now(); tmprime != tm {
+		t.Errorf("Expected time %v; got %v", tm, tmprime)
+	}
+
+	tm = NanoAfterZero
+	s = NewSchedulerTime(tm)
+	s.RemoveNextUpdate()
+	if tmprime := s.Now(); tmprime != tm {
+		t.Errorf("Expected time %v; got %v", tm, tmprime)
+	}
+}
+
+func TestRemoveAll(t *testing.T) {
+	s := NewScheduler()
+	s.Schedule(nil, Zero)
+	s.RemoveAll()
+	if !s.Empty() {
+		t.Errorf("Scheduler should be empty")
+	}
+}
+
+func TestRemoveAllUpdate(t *testing.T) {
+	s := NewScheduler()
+	s.Schedule(nil, Zero)
+	s.RemoveAllUpdate()
+	if !s.Empty() {
+		t.Errorf("Scheduler should be empty")
+	}
+
+	s = NewScheduler()
+	tm := NanoAfterZero
+	s.Schedule(nil, tm)
+	s.RemoveAllUpdate()
+	if tmprime := s.Now(); tmprime != tm {
+		t.Errorf("Expected time %v; got %v", tm, tmprime)
+	}
+
+	tm = NanoAfterZero
+	s = NewSchedulerTime(tm)
+	if tmprime := s.Now(); tmprime != tm {
+		t.Errorf("Expected time %v; got %v", tm, tmprime)
 	}
 }
