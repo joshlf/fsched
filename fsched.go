@@ -123,7 +123,7 @@ func (s *Scheduler) ScheduleOffset(f func(time.Time) interface{}, offset time.Du
 // scheduled event, or the zero value
 // and ErrEmpty if no events are
 // scheduled.
-func (s Scheduler) PeekNext() (time.Time, error) {
+func (s *Scheduler) PeekNext() (time.Time, error) {
 	var t time.Time
 	if s.Empty() {
 		return t, ErrEmpty
