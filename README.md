@@ -4,7 +4,7 @@ Use of this source code is governed by a BSD-style
 license that can be found in the LICENSE file.
 -->
 
-fsched
+fsched [![Build Status](https://travis-ci.org/joshlf13/fsched.svg?branch=master)](https://travis-ci.org/joshlf13/fsched)
 ======
 
 A time-based scheduler for function callbacks
